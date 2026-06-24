@@ -1,0 +1,20 @@
+runConfig:
+  concurrency: 80
+  minInstances: 0
+
+# All secret values come from Secret Manager in the Firebase project (see README).
+# Create them with `firebase apphosting:secrets:set` + `grantaccess`, then set the
+# public NEXT_PUBLIC_APP_URL `value:` to this backend's live URL.
+env:
+  - variable: FIREBASE_PROJECT_ID
+    secret: FIREBASE_PROJECT_ID
+  - variable: FIREBASE_CLIENT_EMAIL
+    secret: FIREBASE_CLIENT_EMAIL
+  - variable: FIREBASE_PRIVATE_KEY_BASE64
+    secret: FIREBASE_PRIVATE_KEY_BASE64
+  - variable: ADMIN_PASSWORD
+    secret: ADMIN_PASSWORD
+  # Used by the admin save → /api/revalidate hook. Set to the live backend URL once
+  # the App Hosting backend exists, then to the custom domain after DNS is live.
+  - variable: NEXT_PUBLIC_APP_URL
+    value: https://faq.ezbookaparty.com
