@@ -2,7 +2,7 @@
 import { useState, useMemo } from 'react'
 import Fuse from 'fuse.js'
 import FaqCard, { type FaqCardData } from './FaqCard'
-import type { Category } from '@/config/categories'
+import type { Category } from '@/lib/types'
 
 // Search corpus carries a little extra (keywords + category name) for matching, but
 // only the FaqCardData subset is ever rendered.
@@ -38,6 +38,8 @@ export default function FaqBrowser({
       }),
     [faqs],
   )
+
+  const catById = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories])
 
   const q = query.trim()
   const results = useMemo(() => (q ? fuse.search(q).map(r => r.item) : []), [q, fuse])
@@ -100,7 +102,7 @@ export default function FaqBrowser({
               </p>
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {results.map(f => (
-                  <FaqCard key={f.slug} faq={f} />
+                  <FaqCard key={f.slug} faq={f} category={catById.get(f.category)} />
                 ))}
               </div>
             </>
@@ -138,7 +140,7 @@ export default function FaqBrowser({
             <section className="max-w-6xl mx-auto px-6 pt-10">
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {faqs.map(f => (
-                  <FaqCard key={f.slug} faq={f} />
+                  <FaqCard key={f.slug} faq={f} category={catById.get(f.category)} />
                 ))}
               </div>
             </section>
@@ -157,7 +159,7 @@ export default function FaqBrowser({
                   </div>
                   <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     {items.map(f => (
-                      <FaqCard key={f.slug} faq={f} />
+                      <FaqCard key={f.slug} faq={f} category={catById.get(f.category)} />
                     ))}
                   </div>
                 </section>

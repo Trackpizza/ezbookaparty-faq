@@ -3,7 +3,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { getFaqBySlug, getPublicSlugs, getFaqsByCategory } from '@/lib/faqs'
 import { getConfig } from '@/lib/config'
-import { getCategoryById } from '@/config/categories'
+import { getCategories, findCategoryById } from '@/lib/categories'
 import { getYouTubeEmbedUrl, getYouTubeThumbnail } from '@/lib/youtube'
 import { faqPageLd, videoObjectLd, SITE_URL } from '@/lib/schema'
 import SiteHeader from '@/components/SiteHeader'
@@ -37,11 +37,12 @@ export default async function FaqPage({ params }: Props) {
   const faq = await getFaqBySlug(params.slug)
   if (!faq || faq.hidden) notFound()
 
-  const [config, related] = await Promise.all([
+  const [config, related, categories] = await Promise.all([
     getConfig(),
     getFaqsByCategory(faq.category),
+    getCategories(),
   ])
-  const category = getCategoryById(faq.category)
+  const category = findCategoryById(categories, faq.category)
   const embedUrl = getYouTubeEmbedUrl(faq.videoUrl)
   const thumb = getYouTubeThumbnail(faq.videoUrl)
 
@@ -180,7 +181,11 @@ export default async function FaqPage({ params }: Props) {
             </h2>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {relatedOthers.map(f => (
-                <FaqCard key={f.slug} faq={f} />
+                <FaqCard
+                  key={f.slug}
+                  faq={f}
+                  category={category ? { name: category.name, emoji: category.emoji } : undefined}
+                />
               ))}
             </div>
           </section>

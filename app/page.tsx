@@ -1,6 +1,6 @@
 import { getPublicFaqs } from '@/lib/faqs'
 import { getConfig } from '@/lib/config'
-import { CATEGORIES, getCategoryById } from '@/config/categories'
+import { getCategories, findCategoryById } from '@/lib/categories'
 import { localBusinessLd } from '@/lib/schema'
 import SiteHeader from '@/components/SiteHeader'
 import SiteFooter from '@/components/SiteFooter'
@@ -11,7 +11,7 @@ import FaqBrowser, { type BrowseFaq } from '@/components/FaqBrowser'
 export const revalidate = 60
 
 export default async function HomePage() {
-  const [faqs, config] = await Promise.all([getPublicFaqs(), getConfig()])
+  const [faqs, config, categories] = await Promise.all([getPublicFaqs(), getConfig(), getCategories()])
 
   const browseFaqs: BrowseFaq[] = faqs.map(f => ({
     slug: f.slug,
@@ -20,7 +20,7 @@ export default async function HomePage() {
     category: f.category,
     videoUrl: f.videoUrl,
     keywords: f.keywords,
-    categoryName: getCategoryById(f.category)?.name ?? '',
+    categoryName: findCategoryById(categories, f.category)?.name ?? '',
   }))
 
   const bizLd = localBusinessLd(config)
@@ -45,7 +45,7 @@ export default async function HomePage() {
       </section>
 
       <main className="flex-1 -mt-6 pb-8">
-        <FaqBrowser faqs={browseFaqs} categories={CATEGORIES} />
+        <FaqBrowser faqs={browseFaqs} categories={categories} />
       </main>
 
       <SiteFooter config={config} />

@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { CATEGORIES, getCategoryBySlug } from '@/config/categories'
+import { getCategories, findCategoryBySlug } from '@/lib/categories'
 import { getFaqsByCategory } from '@/lib/faqs'
 import { getConfig } from '@/lib/config'
 import { SITE_URL } from '@/lib/schema'
@@ -11,8 +11,9 @@ import FaqCard from '@/components/FaqCard'
 
 export const revalidate = 60
 
-export function generateStaticParams() {
-  return CATEGORIES.map(c => ({ slug: c.slug }))
+// Pre-render known categories; admin-added ones render on-demand (dynamicParams default).
+export async function generateStaticParams() {
+  return (await getCategories()).map(c => ({ slug: c.slug }))
 }
 
 interface Props {
@@ -20,7 +21,7 @@ interface Props {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const category = getCategoryBySlug(params.slug)
+  const category = findCategoryBySlug(await getCategories(), params.slug)
   if (!category) return {}
   return {
     title: category.name,
@@ -30,7 +31,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function CategoryPage({ params }: Props) {
-  const category = getCategoryBySlug(params.slug)
+  const category = findCategoryBySlug(await getCategories(), params.slug)
   if (!category) notFound()
 
   const [faqs, config] = await Promise.all([getFaqsByCategory(category.id), getConfig()])
@@ -58,7 +59,7 @@ export default async function CategoryPage({ params }: Props) {
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {faqs.map(f => (
-              <FaqCard key={f.slug} faq={f} />
+              <FaqCard key={f.slug} faq={f} category={{ name: category.name, emoji: category.emoji }} />
             ))}
           </div>
         )}

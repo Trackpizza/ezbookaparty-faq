@@ -1,3 +1,16 @@
+// ── Categories: admin-editable topic taxonomy (Firestore doc siteConfig/taxonomy)
+// A small ordered list the client manages to match their batches / YouTube
+// playlists. Each FAQ stores a category `id`; `id` must stay stable once FAQs
+// reference it (the slug/name can change freely).
+
+export interface Category {
+  id: string            // stable key stored on each FAQ (never changes)
+  slug: string          // SEO URL segment for /category/<slug>
+  name: string          // display name
+  description: string   // shown on the category page + home section
+  emoji: string         // small decorative marker
+}
+
 // ── FAQ entries: one Firestore doc per question, in the `faqs` collection ──────
 // Each FAQ is the atomic unit of the site: one video + answer + transcript = one
 // page = one URL targeting that question's search query. Created/edited from /admin.

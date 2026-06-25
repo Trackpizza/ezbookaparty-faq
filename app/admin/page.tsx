@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { CATEGORIES, getCategoryById } from '@/config/categories'
-import type { SiteConfig, SocialLink } from '@/lib/types'
+import type { SiteConfig, SocialLink, Category } from '@/lib/types'
 import { DEFAULT_CONFIG } from '@/lib/types'
 
 const TOKEN_KEY = 'faq_admin_token'
@@ -43,11 +42,11 @@ interface FormState {
   hidden: boolean
 }
 
-const emptyForm = (): FormState => ({
+const emptyForm = (defaultCategory: string): FormState => ({
   question: '',
   slug: '',
   slugEdited: false,
-  category: CATEGORIES[0]?.id ?? '',
+  category: defaultCategory,
   description: '',
   bulletsText: '',
   transcript: '',
@@ -80,9 +79,23 @@ export default function AdminPage() {
   const [authed, setAuthed] = useState(false)
   const [authError, setAuthError] = useState('')
   const [tab, setTab] = useState<'questions' | 'settings'>('questions')
+  const [categories, setCategories] = useState<Category[]>([])
 
   // ── Auth ────────────────────────────────────────────────────────────────────
   const token = () => (typeof window !== 'undefined' ? sessionStorage.getItem(TOKEN_KEY) ?? '' : '')
+
+  // Categories are shared by both tabs (FAQ dropdown + the Settings editor).
+  const loadCategories = useCallback(async () => {
+    const res = await fetch('/api/admin/categories', { headers: { 'x-admin-token': token() } })
+    if (res.ok) {
+      const data = await res.json()
+      setCategories(Array.isArray(data.categories) ? data.categories : [])
+    }
+  }, [])
+
+  useEffect(() => {
+    if (authed) loadCategories()
+  }, [authed, loadCategories])
 
   const handleLogin = async () => {
     setAuthError('')
@@ -166,14 +179,18 @@ export default function AdminPage() {
       </header>
 
       <div className="max-w-3xl mx-auto px-6 py-10">
-        {tab === 'questions' ? <QuestionsTab token={token} /> : <SettingsTab token={token} />}
+        {tab === 'questions' ? (
+          <QuestionsTab token={token} categories={categories} />
+        ) : (
+          <SettingsTab token={token} categories={categories} onCategoriesChanged={loadCategories} />
+        )}
       </div>
     </div>
   )
 }
 
 // ── Questions tab ─────────────────────────────────────────────────────────────
-function QuestionsTab({ token }: { token: () => string }) {
+function QuestionsTab({ token, categories }: { token: () => string; categories: Category[] }) {
   const [faqs, setFaqs] = useState<FaqRow[]>([])
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState<FormState | null>(null)
@@ -268,7 +285,8 @@ function QuestionsTab({ token }: { token: () => string }) {
           </Field>
           <Field label="Category">
             <select value={form.category} onChange={e => update({ category: e.target.value })} className={inputCls}>
-              {CATEGORIES.map(c => (
+              {categories.length === 0 && <option value="">— no categories yet —</option>}
+              {categories.map(c => (
                 <option key={c.id} value={c.id}>
                   {c.emoji} {c.name}
                 </option>
@@ -329,7 +347,7 @@ function QuestionsTab({ token }: { token: () => string }) {
           <h2 className="text-lg font-bold text-ink-900">Questions</h2>
           <p className="text-sm text-gray-500">{faqs.length} published{faqs.some(f => f.hidden) ? ` · ${faqs.filter(f => f.hidden).length} hidden` : ''}</p>
         </div>
-        <button onClick={() => setForm(emptyForm())} className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-600 text-white text-sm font-semibold rounded-lg hover:bg-brand-700 transition-colors">
+        <button onClick={() => setForm(emptyForm(categories[0]?.id ?? ''))} className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-600 text-white text-sm font-semibold rounded-lg hover:bg-brand-700 transition-colors">
           <span className="text-lg leading-none">+</span> Add question
         </button>
       </div>
@@ -345,7 +363,7 @@ function QuestionsTab({ token }: { token: () => string }) {
       ) : (
         <div className="space-y-2">
           {faqs.map(row => {
-            const cat = getCategoryById(row.category)
+            const cat = categories.find(c => c.id === row.category)
             return (
               <div key={row.id} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4">
                 <div className="flex-1 min-w-0">
@@ -372,7 +390,15 @@ function QuestionsTab({ token }: { token: () => string }) {
 }
 
 // ── Site Settings tab ─────────────────────────────────────────────────────────
-function SettingsTab({ token }: { token: () => string }) {
+function SettingsTab({
+  token,
+  categories,
+  onCategoriesChanged,
+}: {
+  token: () => string
+  categories: Category[]
+  onCategoriesChanged: () => void
+}) {
   const [config, setConfig] = useState<SiteConfig>(DEFAULT_CONFIG)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -418,7 +444,10 @@ function SettingsTab({ token }: { token: () => string }) {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-5">
+    <div className="space-y-8">
+      <CategoriesEditor token={token} categories={categories} onSaved={onCategoriesChanged} />
+
+      <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-5">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-ink-900">Site Settings</h2>
@@ -472,6 +501,117 @@ function SettingsTab({ token }: { token: () => string }) {
             ))}
           </div>
         )}
+      </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Categories editor (admin-managed taxonomy) ────────────────────────────────
+function CategoriesEditor({
+  token,
+  categories,
+  onSaved,
+}: {
+  token: () => string
+  categories: Category[]
+  onSaved: () => void
+}) {
+  type Row = Category & { slugEdited: boolean }
+  const toRows = (cats: Category[]): Row[] => cats.map(c => ({ ...c, slugEdited: true }))
+  const [rows, setRows] = useState<Row[]>(toRows(categories))
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [error, setError] = useState('')
+
+  // Re-sync when the parent reloads the list (e.g. after a save assigns new ids).
+  useEffect(() => {
+    setRows(toRows(categories))
+  }, [categories])
+
+  const update = (i: number, patch: Partial<Row>) =>
+    setRows(rs => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r)))
+  const onName = (i: number, name: string) =>
+    setRows(rs => rs.map((r, idx) => (idx === i ? { ...r, name, slug: r.slugEdited ? r.slug : slugify(name) } : r)))
+  const add = () =>
+    setRows(rs => [...rs, { id: '', slug: '', name: '', description: '', emoji: '', slugEdited: false }])
+  const remove = (i: number) => setRows(rs => rs.filter((_, idx) => idx !== i))
+  const move = (i: number, dir: -1 | 1) =>
+    setRows(rs => {
+      const j = i + dir
+      if (j < 0 || j >= rs.length) return rs
+      const next = [...rs]
+      ;[next[i], next[j]] = [next[j], next[i]]
+      return next
+    })
+
+  const save = async () => {
+    setError('')
+    if (rows.some(r => r.name.trim() === '')) {
+      setError('Every category needs a name (or remove the blank row).')
+      return
+    }
+    setSaving(true)
+    const res = await fetch('/api/admin/categories', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': token() },
+      body: JSON.stringify({
+        categories: rows.map(r => ({ id: r.id, slug: r.slug, name: r.name, description: r.description, emoji: r.emoji })),
+      }),
+    })
+    setSaving(false)
+    if (res.ok) {
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+      onSaved()
+    } else {
+      const d = await res.json().catch(() => ({}))
+      setError(d.error ?? 'Save failed.')
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-ink-900">Categories</h2>
+          <p className="text-sm text-gray-500">Match these to your monthly batches / YouTube playlists. They become the home sections and the FAQ dropdown.</p>
+        </div>
+        <button onClick={save} disabled={saving} className="px-5 py-2 bg-brand-600 text-white text-sm font-semibold rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors">
+          {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save'}
+        </button>
+      </div>
+      <p className="text-xs text-gray-400">Order here = order on the home page. Renaming is safe; deleting a category leaves its questions uncategorized (still searchable) until you reassign them.</p>
+
+      {rows.length === 0 ? (
+        <p className="text-sm text-gray-400 italic">No categories — add your first below.</p>
+      ) : (
+        <div className="space-y-3">
+          {rows.map((row, i) => (
+            <div key={i} className="border border-gray-100 rounded-xl p-3 bg-cream-50">
+              <div className="flex gap-2 items-center">
+                <input type="text" value={row.emoji} onChange={e => update(i, { emoji: e.target.value })} placeholder="🎉" aria-label="Emoji" className="w-12 text-center rounded-lg border border-gray-300 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                <input type="text" value={row.name} onChange={e => onName(i, e.target.value)} placeholder="Category name (e.g. Halloween 2026)" className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                <div className="flex flex-col">
+                  <button onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move up" className="px-1.5 text-gray-400 hover:text-brand-600 disabled:opacity-30 leading-none">▲</button>
+                  <button onClick={() => move(i, 1)} disabled={i === rows.length - 1} aria-label="Move down" className="px-1.5 text-gray-400 hover:text-brand-600 disabled:opacity-30 leading-none">▼</button>
+                </div>
+                <button onClick={() => remove(i)} aria-label="Remove category" className="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 transition-colors">✕</button>
+              </div>
+              <div className="flex gap-2 mt-2">
+                <input type="text" value={row.slug} onChange={e => update(i, { slug: e.target.value, slugEdited: true })} placeholder="url-slug" aria-label="URL slug" className="w-1/3 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-mono text-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                <input type="text" value={row.description} onChange={e => update(i, { description: e.target.value })} placeholder="Short description shown under the section heading" className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="flex items-center justify-between">
+        <button onClick={add} className="inline-flex items-center gap-1 text-sm font-semibold text-brand-600 hover:text-brand-700">
+          <span className="text-lg leading-none">+</span> Add category
+        </button>
+        {error && <p className="text-sm text-red-500">{error}</p>}
       </div>
     </div>
   )

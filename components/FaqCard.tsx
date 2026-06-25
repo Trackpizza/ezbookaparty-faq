@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import type { Faq } from '@/lib/types'
-import { getCategoryById } from '@/config/categories'
 import { getYouTubeThumbnail } from '@/lib/youtube'
 
 // Just the fields a listing card needs — keeps transcripts out of client payloads.
@@ -9,10 +8,16 @@ export type FaqCardData = Pick<Faq, 'slug' | 'question' | 'description' | 'categ
 // Listing card: a YouTube THUMBNAIL (plain <img>, no iframe) + question + summary,
 // linking to the full /faq/<slug> page. Listings never embed players, so a page can
 // show dozens of these with no performance cost — the playable iframe lives only on
-// the detail page (one per page).
-export default function FaqCard({ faq }: { faq: FaqCardData }) {
+// the detail page (one per page). The category chip is passed in (categories are
+// admin-managed / async), so the card itself does no lookups.
+export default function FaqCard({
+  faq,
+  category,
+}: {
+  faq: FaqCardData
+  category?: { name: string; emoji: string }
+}) {
   const thumb = getYouTubeThumbnail(faq.videoUrl)
-  const category = getCategoryById(faq.category)
 
   return (
     <Link

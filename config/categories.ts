@@ -1,20 +1,11 @@
-// Topic taxonomy — the PRIMARY way FAQs are grouped and browsed. This is a small,
-// stable list that changes rarely, so it lives in config (not Firestore). Each FAQ
-// stores a category `id`; everything else (title, description, ordering, the
-// /category/<slug> page) is driven from here.
+import type { Category } from '@/lib/types'
+
+// Seed categories used until the client customizes them in admin → Site Settings.
+// Once saved/edited there, the live list comes from Firestore (siteConfig/taxonomy)
+// via lib/categories.ts; this array is only the starting point / fallback.
 //
-// To add a topic: append an entry. To rename a topic shown on the site: edit `name`
-// /`description`. Never change an `id` once FAQs reference it.
-
-export interface Category {
-  id: string            // stable key stored on each FAQ (never changes)
-  slug: string          // SEO URL segment for /category/<slug>
-  name: string          // display name
-  description: string   // shown on the category page + home section
-  emoji: string         // small visual marker (purely decorative)
-}
-
-export const CATEGORIES: Category[] = [
+// Never reuse or repurpose an existing `id` — FAQs reference it.
+export const DEFAULT_CATEGORIES: Category[] = [
   {
     id: 'booking',
     slug: 'booking-a-party',
@@ -51,14 +42,3 @@ export const CATEGORIES: Category[] = [
     emoji: '🛡️',
   },
 ]
-
-export const CATEGORY_BY_ID = Object.fromEntries(CATEGORIES.map(c => [c.id, c])) as Record<string, Category>
-export const CATEGORY_BY_SLUG = Object.fromEntries(CATEGORIES.map(c => [c.slug, c])) as Record<string, Category>
-
-export function getCategoryById(id: string): Category | undefined {
-  return CATEGORY_BY_ID[id]
-}
-
-export function getCategoryBySlug(slug: string): Category | undefined {
-  return CATEGORY_BY_SLUG[slug]
-}
