@@ -432,7 +432,8 @@ function SettingsTab({ token }: { token: () => string }) {
       <div className="grid sm:grid-cols-2 gap-4">
         <Field label="Business name"><input type="text" value={config.businessName} onChange={e => set({ businessName: e.target.value })} className={inputCls} /></Field>
         <Field label="Tagline"><input type="text" value={config.tagline} onChange={e => set({ tagline: e.target.value })} className={inputCls} /></Field>
-        <Field label="Phone"><input type="text" value={config.phone} onChange={e => set({ phone: e.target.value })} placeholder="(555) 123-4567" className={inputCls} /></Field>
+        <Field label="Phone (office/landline)" hint="Shows a 'Call' link."><input type="text" value={config.phone} onChange={e => set({ phone: e.target.value })} placeholder="(555) 123-4567" className={inputCls} /></Field>
+        <Field label="Mobile / cell" hint="Shows both a 'Call' and a 'Text us' (SMS) link."><input type="text" value={config.mobilePhone} onChange={e => set({ mobilePhone: e.target.value })} placeholder="(555) 987-6543" className={inputCls} /></Field>
         <Field label="Email"><input type="text" value={config.email} onChange={e => set({ email: e.target.value })} className={inputCls} /></Field>
         <Field label="Booking URL" hint="Where the 'Book a Party' button goes."><input type="text" value={config.bookingUrl} onChange={e => set({ bookingUrl: e.target.value })} className={inputCls} /></Field>
         <Field label="Main website URL"><input type="text" value={config.websiteUrl} onChange={e => set({ websiteUrl: e.target.value })} className={inputCls} /></Field>
@@ -440,6 +441,12 @@ function SettingsTab({ token }: { token: () => string }) {
         <Field label="City"><input type="text" value={config.city} onChange={e => set({ city: e.target.value })} className={inputCls} /></Field>
         <Field label="State / region"><input type="text" value={config.region} onChange={e => set({ region: e.target.value })} placeholder="TX" className={inputCls} /></Field>
         <Field label="Postal code"><input type="text" value={config.postalCode} onChange={e => set({ postalCode: e.target.value })} className={inputCls} /></Field>
+      </div>
+
+      <div className="pt-5 border-t border-gray-100">
+        <Field label="Disclaimer" hint="Shown in small print at the bottom of every page (liability, weather/cancellation terms, etc.). Leave blank to hide. Line breaks are preserved.">
+          <textarea value={config.disclaimer} onChange={e => set({ disclaimer: e.target.value })} rows={4} className={`${inputCls} leading-relaxed`} placeholder="Prices and availability subject to change. Deposits are non-refundable within 7 days of the event. EZ Book A Party is not liable for…" />
+        </Field>
       </div>
 
       <div className="pt-5 border-t border-gray-100">

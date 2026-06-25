@@ -1,9 +1,18 @@
 import Link from 'next/link'
 import type { SiteConfig } from '@/lib/types'
 
-// Shared footer. Pulls NAP + social links from the admin-editable SiteConfig.
+// Digits-only for tel:/sms: hrefs (keeps a leading + if present).
+function dial(raw: string): string {
+  const plus = raw.trim().startsWith('+') ? '+' : ''
+  return plus + raw.replace(/\D/g, '')
+}
+
+// Shared footer. Pulls NAP + mobile (Call/Text) + disclaimer + social links from the
+// admin-editable SiteConfig.
 export default function SiteFooter({ config }: { config: SiteConfig }) {
-  const telHref = config.phone ? `tel:${config.phone.replace(/\D/g, '')}` : ''
+  const hasPhone = config.phone.trim() !== ''
+  const hasMobile = config.mobilePhone.trim() !== ''
+
   return (
     <footer className="bg-ink-900 border-t border-white/10 py-10 mt-16">
       <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
@@ -14,11 +23,23 @@ export default function SiteFooter({ config }: { config: SiteConfig }) {
           >
             {config.businessName}
           </p>
-          {config.phone && (
-            <a href={telHref} className="text-white/50 hover:text-white/80 text-sm transition-colors">
-              {config.phone}
-            </a>
-          )}
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-1 mt-1">
+            {hasPhone && (
+              <a href={`tel:${dial(config.phone)}`} className="text-white/50 hover:text-white/80 text-sm transition-colors">
+                📞 Call {config.phone}
+              </a>
+            )}
+            {hasMobile && (
+              <>
+                <a href={`tel:${dial(config.mobilePhone)}`} className="text-white/50 hover:text-white/80 text-sm transition-colors">
+                  📱 Call {config.mobilePhone}
+                </a>
+                <a href={`sms:${dial(config.mobilePhone)}`} className="text-white/50 hover:text-white/80 text-sm transition-colors">
+                  💬 Text us
+                </a>
+              </>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-4 text-sm flex-wrap justify-center">
           {config.socialLinks.map((link, i) => (
@@ -42,6 +63,14 @@ export default function SiteFooter({ config }: { config: SiteConfig }) {
           )}
         </div>
       </div>
+
+      {config.disclaimer.trim() && (
+        <div className="max-w-6xl mx-auto px-6 mt-8 pt-6 border-t border-white/10">
+          <p className="text-xs text-white/35 leading-relaxed text-center md:text-left whitespace-pre-line">
+            {config.disclaimer}
+          </p>
+        </div>
+      )}
     </footer>
   )
 }

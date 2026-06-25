@@ -47,7 +47,8 @@ export interface SocialLink {
 export interface SiteConfig {
   businessName: string
   tagline: string
-  phone: string
+  phone: string         // main landline/office → Call (tel:) link + schema
+  mobilePhone: string   // cell → Call (tel:) AND Text (sms:) links
   email: string
   bookingUrl: string    // main "Book a Party" CTA destination
   websiteUrl: string    // main marketing site (logo link)
@@ -55,6 +56,7 @@ export interface SiteConfig {
   city: string
   region: string        // state, e.g. "TX"
   postalCode: string
+  disclaimer: string    // site-wide legal/policy disclaimer shown in the footer
   socialLinks: SocialLink[]  // Instagram, Facebook, GBP, etc. → footer + schema sameAs
 }
 
@@ -62,6 +64,7 @@ export const DEFAULT_CONFIG: SiteConfig = {
   businessName: 'EZ Book A Party',
   tagline: 'Answers to your party booking, rental, and setup questions.',
   phone: '',
+  mobilePhone: '',
   email: '',
   bookingUrl: 'https://www.ezbookaparty.com',
   websiteUrl: 'https://www.ezbookaparty.com',
@@ -69,5 +72,6 @@ export const DEFAULT_CONFIG: SiteConfig = {
   city: '',
   region: '',
   postalCode: '',
+  disclaimer: '',
   socialLinks: [],
 }
