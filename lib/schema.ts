@@ -17,25 +17,30 @@ function normalizePhone(raw?: string): string | undefined {
 // never ship a half-empty PostalAddress before the client fills in their NAP.
 export function localBusinessLd(config: SiteConfig) {
   const phone = normalizePhone(config.phone)
-  const sameAs = config.socialLinks.map(l => l.url).filter(u => u && u.trim() !== '')
-  const hasAddress = config.address || config.city || config.region || config.postalCode
+  const sameAs = config.socialLinks.map(l => l.url.trim()).filter(u => u !== '')
+  // Trim stray spaces so structured-data NAP stays clean/consistent.
+  const street = config.address.trim()
+  const city = config.city.trim()
+  const region = config.region.trim()
+  const postalCode = config.postalCode.trim()
+  const hasAddress = street || city || region || postalCode
   return {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
     '@id': BUSINESS_ID,
-    name: config.businessName,
+    name: config.businessName.trim(),
     url: SITE_URL,
-    ...(config.websiteUrl ? { mainEntityOfPage: config.websiteUrl } : {}),
+    ...(config.websiteUrl ? { mainEntityOfPage: config.websiteUrl.trim() } : {}),
     ...(phone ? { telephone: phone } : {}),
-    ...(config.email ? { email: config.email } : {}),
+    ...(config.email ? { email: config.email.trim() } : {}),
     ...(hasAddress
       ? {
           address: {
             '@type': 'PostalAddress',
-            ...(config.address ? { streetAddress: config.address } : {}),
-            ...(config.city ? { addressLocality: config.city } : {}),
-            ...(config.region ? { addressRegion: config.region } : {}),
-            ...(config.postalCode ? { postalCode: config.postalCode } : {}),
+            ...(street ? { streetAddress: street } : {}),
+            ...(city ? { addressLocality: city } : {}),
+            ...(region ? { addressRegion: region } : {}),
+            ...(postalCode ? { postalCode } : {}),
             addressCountry: 'US',
           },
         }

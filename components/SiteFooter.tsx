@@ -13,6 +13,16 @@ export default function SiteFooter({ config }: { config: SiteConfig }) {
   const hasPhone = config.phone.trim() !== ''
   const hasMobile = config.mobilePhone.trim() !== ''
 
+  // Assemble a visible NAP address: "Street, City, ST ZIP" (trims stray spaces,
+  // skips blank parts).
+  const t = (s: string) => s.trim()
+  const cityState = [t(config.city), t(config.region)].filter(Boolean).join(', ')
+  const cityStateZip = [cityState, t(config.postalCode)].filter(Boolean).join(' ')
+  const fullAddress = [t(config.address), cityStateZip].filter(Boolean).join(', ')
+  const mapsHref = fullAddress
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${config.businessName} ${fullAddress}`)}`
+    : ''
+
   return (
     <footer className="bg-ink-900 border-t border-white/10 py-10 mt-16">
       <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
@@ -23,6 +33,16 @@ export default function SiteFooter({ config }: { config: SiteConfig }) {
           >
             {config.businessName}
           </p>
+          {fullAddress && (
+            <a
+              href={mapsHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block text-white/50 hover:text-white/80 text-sm transition-colors mt-1"
+            >
+              📍 {fullAddress}
+            </a>
+          )}
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-1 mt-1">
             {hasPhone && (
               <a href={`tel:${dial(config.phone)}`} className="text-white/50 hover:text-white/80 text-sm transition-colors">
