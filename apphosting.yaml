@@ -14,7 +14,7 @@ env:
     secret: FIREBASE_PRIVATE_KEY_BASE64
   - variable: ADMIN_PASSWORD
     secret: ADMIN_PASSWORD
-  # Used by the admin save → /api/revalidate hook. Set to the live backend URL once
-  # the App Hosting backend exists, then to the custom domain after DNS is live.
+  # Used by the admin save → /api/revalidate hook (server calls itself). The live
+  # backend URL always works; the custom domain will too once DNS is live.
   - variable: NEXT_PUBLIC_APP_URL
-    value: https://faq.ezbookaparty.com
+    value: https://ezbookaparty-faq--ezbookaparty-faq.us-central1.hosted.app
