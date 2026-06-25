@@ -453,8 +453,8 @@ function SettingsTab({
           <h2 className="text-lg font-bold text-ink-900">Site Settings</h2>
           <p className="text-sm text-gray-500">Business info for the footer + Google business panel. Match your Google Business Profile.</p>
         </div>
-        <button onClick={save} disabled={saving} className="px-5 py-2 bg-brand-600 text-white text-sm font-semibold rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors">
-          {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save'}
+        <button onClick={save} disabled={saving} className="px-5 py-2 bg-brand-600 text-white text-sm font-semibold rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors shrink-0">
+          {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save business info'}
         </button>
       </div>
 
@@ -501,6 +501,13 @@ function SettingsTab({
             ))}
           </div>
         )}
+      </div>
+
+      <div className="pt-5 border-t border-gray-100 flex items-center justify-end gap-3">
+        {saved && <span className="text-sm text-green-600 font-medium">✓ Saved</span>}
+        <button onClick={save} disabled={saving} className="px-6 py-2 bg-brand-600 text-white text-sm font-semibold rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors">
+          {saving ? 'Saving…' : 'Save business info'}
+        </button>
       </div>
       </div>
     </div>
@@ -577,8 +584,8 @@ function CategoriesEditor({
           <h2 className="text-lg font-bold text-ink-900">Categories</h2>
           <p className="text-sm text-gray-500">Match these to your monthly batches / YouTube playlists. They become the home sections and the FAQ dropdown.</p>
         </div>
-        <button onClick={save} disabled={saving} className="px-5 py-2 bg-brand-600 text-white text-sm font-semibold rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors">
-          {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save'}
+        <button onClick={save} disabled={saving} className="px-5 py-2 bg-brand-600 text-white text-sm font-semibold rounded-lg hover:bg-brand-700 disabled:opacity-50 transition-colors shrink-0">
+          {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save categories'}
         </button>
       </div>
       <p className="text-xs text-gray-400">Order here = order on the home page. Renaming is safe; deleting a category leaves its questions uncategorized (still searchable) until you reassign them.</p>
