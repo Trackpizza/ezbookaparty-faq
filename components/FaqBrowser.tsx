@@ -69,6 +69,7 @@ export default function FaqBrowser({
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Search a question, e.g. deposit, delivery, cancel…"
+            aria-label="Search questions"
             className="w-full pl-12 pr-10 py-4 rounded-full border border-brand-200 bg-white text-gray-900 text-base placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition"
           />
           {query && (
